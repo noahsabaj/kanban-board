@@ -1,101 +1,212 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Task, BoardState } from '@/components/kanban/types';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { DEFAULT_PERSISTED_STATE, PersistedState } from '@/lib/types';
+import { Header } from '@/components/kanban/Header';
+import { BoardLayout } from '@/components/kanban/BoardLayout';
+import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
+import { TaskModal } from '@/components/modals/TaskModal';
+import { BulkImportModal } from '@/components/modals/BulkImportModal';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [persistedState, setPersistedState] = useLocalStorage<PersistedState>(
+    'kanbanState',
+    DEFAULT_PERSISTED_STATE
+  );
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+  const [board, setBoard] = useState(persistedState.board);
+  const [darkMode, setDarkMode] = useState(persistedState.darkMode);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [bulkTasks, setBulkTasks] = useState('');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [totalPoints, setTotalPoints] = useState<{ [key: string]: number }>({});
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    setPersistedState({
+      board,
+      darkMode,
+      lastUpdated: new Date().toISOString()
+    });
+  }, [board, darkMode]);
+
+  useEffect(() => {
+    calculateTotalPoints();
+  }, [board]);
+
+  const calculateTotalPoints = () => {
+    const points = Object.entries(board).reduce((acc, [column, tasks]) => {
+      acc[column] = tasks.reduce((sum, task) => sum + task.points, 0);
+      return acc;
+    }, {} as { [key: string]: number });
+    setTotalPoints(points);
+  };
+
+  const handleCreateTask = (task: Task) => {
+    const newBoard = {
+      ...board,
+      backlog: [...board.backlog, task]
+    };
+    setBoard(newBoard);
+    setIsCreating(false);
+  };
+
+  const handleEditTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    
+    const updatedTask = {
+      ...editingTask,
+      lastModified: new Date().toISOString()
+    };
+    
+    setBoard(prev => {
+      const newBoard = { ...prev };
+      Object.keys(newBoard).forEach(key => {
+        newBoard[key as keyof BoardState] = newBoard[key as keyof BoardState]
+          .map(t => t.id === updatedTask.id ? updatedTask : t);
+      });
+      return newBoard;
+    });
+    
+    setIsEditing(false);
+    setEditingTask(null);
+    setSelectedTask(updatedTask);
+  };
+
+  const handleDeleteTask = (taskId: number) => {
+    setBoard(prev => {
+      const newBoard = { ...prev };
+      Object.keys(newBoard).forEach(key => {
+        newBoard[key as keyof BoardState] = newBoard[key as keyof BoardState]
+          .filter(t => t.id !== taskId);
+      });
+      return newBoard;
+    });
+    setShowDeleteConfirm(false);
+    setSelectedTask(null);
+  };
+
+  const handleBulkImport = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const tasks: Task[] = JSON.parse(bulkTasks);
+      const timestamp = new Date().toISOString();
+      const tasksWithIds = tasks.map(task => ({
+        ...task,
+        id: Date.now() + Math.random(),
+        created: timestamp,
+        lastModified: timestamp
+      }));
+      
+      setBoard(prev => ({
+        ...prev,
+        backlog: [...prev.backlog, ...tasksWithIds]
+      }));
+      setIsBulkImporting(false);
+      setBulkTasks('');
+    } catch (error) {
+      alert('Invalid JSON format. Please check your input.');
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    e.dataTransfer.setData('task', JSON.stringify(task));
+  };
+
+  const handleDrop = (e: React.DragEvent, column: keyof BoardState) => {
+    e.preventDefault();
+    const task = JSON.parse(e.dataTransfer.getData('task')) as Task;
+    const updatedTask = {
+      ...task,
+      lastModified: new Date().toISOString()
+    };
+    
+    setBoard(prev => {
+      const newBoard = { ...prev };
+      Object.keys(newBoard).forEach(key => {
+        newBoard[key as keyof BoardState] = newBoard[key as keyof BoardState]
+          .filter(t => t.id !== task.id);
+      });
+      
+      newBoard[column] = [...newBoard[column], updatedTask];
+      return newBoard;
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const startEditing = (task: Task) => {
+    setEditingTask(task);
+    setIsEditing(true);
+  };
+
+  return (
+    <main className={`min-h-screen p-6 ${darkMode ? 'bg-[#0d1117] text-gray-100' : 'bg-gray-100 text-gray-900'}`}>
+      <div className="max-w-[1800px] mx-auto">
+        <Header 
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          darkMode={darkMode}
+          onDarkModeToggle={() => setDarkMode(!darkMode)}
+          onImport={() => setIsBulkImporting(true)}
+          onCreateTask={() => setIsCreating(true)}
+        />
+
+        <BoardLayout 
+          board={board}
+          totalPoints={totalPoints}
+          darkMode={darkMode}
+          searchTerm={searchTerm}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragStart={handleDragStart}
+          onTaskClick={setSelectedTask}
+        />
+
+        <CreateTaskModal 
+          isOpen={isCreating}
+          onClose={() => setIsCreating(false)}
+          onSubmit={handleCreateTask}
+          darkMode={darkMode}
+        />
+
+        {selectedTask && (
+          <TaskModal
+            task={selectedTask}
+            isEditing={isEditing}
+            showDeleteConfirm={showDeleteConfirm}
+            editingTask={editingTask || selectedTask}
+            darkMode={darkMode}
+            onClose={() => {
+              setSelectedTask(null);
+              setIsEditing(false);
+              setEditingTask(null);
+            }}
+            onDelete={handleDeleteTask}
+            onEdit={() => startEditing(selectedTask)}
+            onEditSubmit={handleEditTask}
+            onEditingTaskChange={setEditingTask}
+            onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        )}
+
+        <BulkImportModal
+          isOpen={isBulkImporting}
+          onClose={() => setIsBulkImporting(false)}
+          onSubmit={handleBulkImport}
+          bulkTasks={bulkTasks}
+          onBulkTasksChange={setBulkTasks}
+        />
+      </div>
+    </main>
   );
 }

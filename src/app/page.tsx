@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Task, BoardState } from '@/components/kanban/types';
+import { Task, BoardState, Priority } from '@/components/kanban/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { DEFAULT_PERSISTED_STATE, PersistedState } from '@/lib/types';
 import { Header } from '@/components/kanban/Header';
@@ -9,14 +9,18 @@ import { BoardLayout } from '@/components/kanban/BoardLayout';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { TaskModal } from '@/components/modals/TaskModal';
 import { BulkImportModal } from '@/components/modals/BulkImportModal';
+import { FilterControls, SortType } from '@/components/kanban/FilterControls';
+import { MotivationBanner } from '@/components/ui/MotivationBanner';
+import { loadBoard, saveTask, deleteTask, updateTaskStatus } from '@/lib/storage';
 
 export default function Home() {
+  // State management with proper typing
   const [persistedState, setPersistedState] = useLocalStorage<PersistedState>(
     'kanbanState',
     DEFAULT_PERSISTED_STATE
   );
 
-  const [board, setBoard] = useState(persistedState.board);
+  const [board, setBoard] = useState<BoardState>(DEFAULT_PERSISTED_STATE.board);
   const [darkMode, setDarkMode] = useState(persistedState.darkMode);
   const [isCreating, setIsCreating] = useState(false);
   const [isBulkImporting, setIsBulkImporting] = useState(false);
@@ -25,35 +29,76 @@ export default function Home() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [totalPoints, setTotalPoints] = useState<{ [key: string]: number }>({});
+  const [totalPoints, setTotalPoints] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
+  const [sortType, setSortType] = useState<SortType>('priority-desc');
 
+  // Load tasks from database on mount
+  useEffect(() => {
+    const tasks = loadBoard();
+    setBoard(tasks);
+  }, []);
+
+  // Persist state changes
   useEffect(() => {
     setPersistedState({
       board,
       darkMode,
       lastUpdated: new Date().toISOString()
     });
-  }, [board, darkMode]);
+  }, [board, darkMode, setPersistedState]);
 
+  // Calculate total points
   useEffect(() => {
-    calculateTotalPoints();
+    const points = Object.entries(board).reduce<Record<string, number>>((acc, [column, tasks]) => {
+      acc[column] = tasks.reduce((sum: any, task: { points: any; }) => sum + (task.points || 0), 0);
+      return acc;
+    }, {});
+    setTotalPoints(points);
   }, [board]);
 
-  const calculateTotalPoints = () => {
-    const points = Object.entries(board).reduce((acc, [column, tasks]) => {
-      acc[column] = tasks.reduce((sum, task) => sum + task.points, 0);
-      return acc;
-    }, {} as { [key: string]: number });
-    setTotalPoints(points);
+  const filterAndSortTasks = (tasks: Task[]) => {
+    let filteredTasks = [...tasks];
+    
+    if (selectedPriority) {
+      filteredTasks = filteredTasks.filter(task => task.priority === selectedPriority);
+    }
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredTasks = filteredTasks.filter(task => 
+        task.title.toLowerCase().includes(searchLower) ||
+        task.category.toLowerCase().includes(searchLower) ||
+        task.description?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const priorityOrder: Record<Priority, number> = {
+      '🔥': 4,
+      '⭐': 3,
+      '👍': 2,
+      '📝': 1
+    };
+
+    switch (sortType) {
+      case 'priority-desc':
+        return filteredTasks.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+      case 'priority-asc':
+        return filteredTasks.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      case 'alphabetical':
+        return filteredTasks.sort((a, b) => a.title.localeCompare(b.title));
+      default:
+        return filteredTasks;
+    }
   };
 
   const handleCreateTask = (task: Task) => {
-    const newBoard = {
-      ...board,
-      backlog: [...board.backlog, task]
-    };
-    setBoard(newBoard);
+    saveTask(task, 'backlog');
+    setBoard(prev => ({
+      ...prev,
+      backlog: [...prev.backlog, task]
+    }));
     setIsCreating(false);
   };
 
@@ -61,16 +106,26 @@ export default function Home() {
     e.preventDefault();
     if (!editingTask) return;
     
-    const updatedTask = {
+    const updatedTask: Task = {
       ...editingTask,
       lastModified: new Date().toISOString()
     };
+
+    let currentStatus: keyof BoardState = 'backlog';
+    Object.entries(board).forEach(([status, tasks]) => {
+      if (tasks.some(t => t.id === updatedTask.id)) {
+        currentStatus = status as keyof BoardState;
+      }
+    });
+
+    saveTask(updatedTask, currentStatus);
     
     setBoard(prev => {
       const newBoard = { ...prev };
-      Object.keys(newBoard).forEach(key => {
-        newBoard[key as keyof BoardState] = newBoard[key as keyof BoardState]
-          .map(t => t.id === updatedTask.id ? updatedTask : t);
+      Object.entries(newBoard).forEach(([key, tasks]) => {
+        newBoard[key as keyof BoardState] = tasks.map(t => 
+          t.id === updatedTask.id ? updatedTask : t
+        );
       });
       return newBoard;
     });
@@ -81,11 +136,11 @@ export default function Home() {
   };
 
   const handleDeleteTask = (taskId: number) => {
+    deleteTask(taskId);
     setBoard(prev => {
       const newBoard = { ...prev };
-      Object.keys(newBoard).forEach(key => {
-        newBoard[key as keyof BoardState] = newBoard[key as keyof BoardState]
-          .filter(t => t.id !== taskId);
+      Object.entries(newBoard).forEach(([key, tasks]) => {
+        newBoard[key as keyof BoardState] = tasks.filter(t => t.id !== taskId);
       });
       return newBoard;
     });
@@ -105,6 +160,7 @@ export default function Home() {
         lastModified: timestamp
       }));
       
+      tasksWithIds.forEach(task => saveTask(task, 'backlog'));
       setBoard(prev => ({
         ...prev,
         backlog: [...prev.backlog, ...tasksWithIds]
@@ -112,15 +168,16 @@ export default function Home() {
       setIsBulkImporting(false);
       setBulkTasks('');
     } catch (error) {
+      console.error('Failed to import tasks:', error);
       alert('Invalid JSON format. Please check your input.');
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
     e.dataTransfer.setData('task', JSON.stringify(task));
   };
 
-  const handleDrop = (e: React.DragEvent, column: keyof BoardState) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, column: keyof BoardState) => {
     e.preventDefault();
     const task = JSON.parse(e.dataTransfer.getData('task')) as Task;
     const updatedTask = {
@@ -128,11 +185,11 @@ export default function Home() {
       lastModified: new Date().toISOString()
     };
     
+    updateTaskStatus(updatedTask.id, column);
     setBoard(prev => {
       const newBoard = { ...prev };
-      Object.keys(newBoard).forEach(key => {
-        newBoard[key as keyof BoardState] = newBoard[key as keyof BoardState]
-          .filter(t => t.id !== task.id);
+      Object.entries(newBoard).forEach(([key, tasks]) => {
+        newBoard[key as keyof BoardState] = tasks.filter(t => t.id !== task.id);
       });
       
       newBoard[column] = [...newBoard[column], updatedTask];
@@ -140,7 +197,7 @@ export default function Home() {
     });
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
@@ -150,8 +207,8 @@ export default function Home() {
   };
 
   return (
-    <main className={`min-h-screen p-6 ${darkMode ? 'bg-[#0d1117] text-gray-100' : 'bg-gray-100 text-gray-900'}`}>
-      <div className="max-w-[1800px] mx-auto">
+    <main className="min-h-screen p-6 flex flex-col justify-between bg-[#0d1117] text-gray-100">
+      <div className="max-w-[1800px] mx-auto w-full">
         <Header 
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -161,8 +218,18 @@ export default function Home() {
           onCreateTask={() => setIsCreating(true)}
         />
 
+        <FilterControls
+          selectedPriority={selectedPriority}
+          onPrioritySelect={setSelectedPriority}
+          sortType={sortType}
+          onSortChange={setSortType}
+        />
+
         <BoardLayout 
-          board={board}
+          board={Object.entries(board).reduce<BoardState>((acc, [key, tasks]) => ({
+            ...acc,
+            [key]: filterAndSortTasks(tasks)
+          }), DEFAULT_PERSISTED_STATE.board)}
           totalPoints={totalPoints}
           darkMode={darkMode}
           searchTerm={searchTerm}
@@ -206,6 +273,10 @@ export default function Home() {
           bulkTasks={bulkTasks}
           onBulkTasksChange={setBulkTasks}
         />
+      </div>
+
+      <div className="mt-8">
+        <MotivationBanner />
       </div>
     </main>
   );

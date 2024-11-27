@@ -1,8 +1,9 @@
 'use client';
 
 import { Task, BoardState } from '@/components/kanban/types';
+import { ArrowRight } from 'lucide-react';
 
-interface KanbanColumnProps {
+interface ColumnProps {
   columnId: string;
   tasks: Task[];
   totalPoints: number;
@@ -14,14 +15,6 @@ interface KanbanColumnProps {
   searchTerm: string;
 }
 
-const getFilteredTasks = (tasks: Task[], searchTerm: string) => {
-  return tasks.filter(task => 
-    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-};
-
 export const KanbanColumn = ({
   columnId,
   tasks,
@@ -31,50 +24,65 @@ export const KanbanColumn = ({
   onDragOver,
   onDragStart,
   onTaskClick,
-  searchTerm
-}: KanbanColumnProps) => {
+  searchTerm,
+}: ColumnProps) => {
   return (
     <div 
-      className={`${darkMode ? 'bg-[#161b22]' : 'bg-white'} rounded-xl shadow-lg border border-gray-700`}
+      className={`flex flex-col ${darkMode ? 'bg-[#161b22]' : 'bg-white'} 
+                rounded-xl shadow-lg border border-gray-700/50 backdrop-blur-sm
+                transition-all duration-200 hover:border-gray-600/50`}
       onDrop={(e) => onDrop(e, columnId as keyof BoardState)}
       onDragOver={onDragOver}
     >
-      <div className="p-4 border-b border-gray-700">
-        <h2 className="font-bold text-lg">
-          {columnId.toUpperCase()}
-          <span className="ml-2 text-sm text-gray-400">
-            {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-          </span>
-          <span className="ml-2 text-sm text-purple-400">
-            {totalPoints} pts
-          </span>
-        </h2>
+      <div className="p-4 border-b border-gray-700/50">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-lg">
+            {columnId.toUpperCase()}
+          </h2>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="px-2 py-1 rounded-full bg-gray-800/50 text-purple-400">
+              {tasks.length}
+            </span>
+            <span className="px-2 py-1 rounded-full bg-gray-800/50 text-blue-400">
+              {totalPoints} pts
+            </span>
+          </div>
+        </div>
       </div>
       
-      <div className="p-4 space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto">
-        {getFilteredTasks(tasks, searchTerm).map((task: Task) => (
+      <div className="flex-1 p-4 space-y-3 min-h-[200px] max-h-[calc(100vh-280px)] overflow-y-auto">
+        {tasks.map((task: Task) => (
           <div
             key={task.id}
             draggable
             onDragStart={(e) => onDragStart(e, task)}
             onClick={() => onTaskClick(task)}
-            className={`${darkMode ? 'bg-[#21262d]' : 'bg-gray-50'} rounded-lg p-4 shadow-md cursor-move 
+            className={`group bg-gray-800/50 rounded-lg p-4 shadow-md cursor-move 
                     hover:shadow-lg transition-all duration-200 
-                    border border-gray-700 hover:border-blue-500/50`}
+                    border border-gray-700/50 hover:border-purple-500/30
+                    hover:translate-x-1 hover:-translate-y-1`}
           >
             <div className="flex justify-between items-start mb-2">
-              <h3 className="font-medium">
-                {task.title}
-                <span className="ml-2 text-sm text-purple-400">{task.points}pts</span>
-              </h3>
-              <div className="flex gap-2 text-sm">
-                <span className="opacity-90">{task.priority}</span>
-                <span className="opacity-90">{task.type}</span>
+              <h3 className="font-medium flex-1 pr-4">{task.title}</h3>
+              <div className="flex gap-2 text-sm opacity-80">
+                <span>{task.priority}</span>
+                <span>{task.type}</span>
               </div>
             </div>
-            <div className="text-sm text-gray-400">{task.category}</div>
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-400">{task.category}</div>
+              <span className="text-sm text-purple-400">{task.points}pts</span>
+            </div>
+            <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <ArrowRight size={16} className="text-gray-400" />
+            </div>
           </div>
         ))}
+        {tasks.length === 0 && (
+          <div className="h-full flex items-center justify-center text-gray-500 text-sm">
+            Drop tasks here
+          </div>
+        )}
       </div>
     </div>
   );

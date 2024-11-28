@@ -8,6 +8,7 @@ import { Header } from '@/components/kanban/Header';
 import { BoardLayout } from '@/components/kanban/BoardLayout';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { TaskModal } from '@/components/modals/TaskModal';
+import { BoardMetrics } from '@/components/kanban/BoardMetrics';
 import { BulkImportModal } from '@/components/modals/BulkImportModal';
 import { FilterControls, SortType } from '@/components/kanban/FilterControls';
 import { MotivationBanner } from '@/components/ui/MotivationBanner';
@@ -34,6 +35,11 @@ export default function Home() {
   const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
   const [sortType, setSortType] = useState<SortType>('priority-desc');
 
+  // Initialize theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, []);
+
   // Load tasks from database on mount
   useEffect(() => {
     const tasks = loadBoard();
@@ -57,6 +63,13 @@ export default function Home() {
     }, {});
     setTotalPoints(points);
   }, [board]);
+
+  // Theme toggle handler
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    document.documentElement.setAttribute('data-theme', newMode ? 'dark' : 'light');
+  };
 
   const filterAndSortTasks = (tasks: Task[]) => {
     let filteredTasks = [...tasks];
@@ -207,23 +220,26 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen p-6 flex flex-col justify-between bg-[#0d1117] text-gray-100">
+    <main className="min-h-screen p-6 flex flex-col justify-between bg-[var(--background)] text-[var(--foreground)]">
       <div className="max-w-[1800px] mx-auto w-full">
         <Header 
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           darkMode={darkMode}
-          onDarkModeToggle={() => setDarkMode(!darkMode)}
+          onDarkModeToggle={toggleDarkMode}
           onImport={() => setIsBulkImporting(true)}
           onCreateTask={() => setIsCreating(true)}
         />
 
-        <FilterControls
-          selectedPriority={selectedPriority}
-          onPrioritySelect={setSelectedPriority}
-          sortType={sortType}
-          onSortChange={setSortType}
-        />
+        <div className="flex justify-between items-center mb-6">
+          <FilterControls
+            selectedPriority={selectedPriority}
+            onPrioritySelect={setSelectedPriority}
+            sortType={sortType}
+            onSortChange={setSortType}
+          />
+          <BoardMetrics board={board} />
+        </div>
 
         <BoardLayout 
           board={Object.entries(board).reduce<BoardState>((acc, [key, tasks]) => ({

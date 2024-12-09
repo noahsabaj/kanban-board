@@ -2,7 +2,7 @@
 'use client';
 
 import { AlertCircle } from 'lucide-react';
-import { BoardState } from './types';
+import { BoardState, Task } from './types';
 
 interface BoardMetricsProps {
   board: BoardState;
@@ -16,7 +16,7 @@ export const BoardMetrics = ({ board, className = '' }: BoardMetricsProps) => {
 
     Object.values(board).forEach(tasks => {
       totalStories += tasks.length;
-      totalPoints += tasks.reduce((sum: any, task: { points: any; }) => sum + (task.points || 0), 0);
+      totalPoints += tasks.reduce((sum: number, task: Task) => sum + (task.points || 0), 0);
     });
 
     return { totalStories, totalPoints };

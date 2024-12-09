@@ -37,7 +37,7 @@ export default function Home() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
-  }, []);
+  }, [darkMode]);
 
   useEffect(() => {
     const tasks = loadBoard();
@@ -52,9 +52,13 @@ export default function Home() {
     });
   }, [board, darkMode, setPersistedState]);
 
+  const calculatePoints = (column: Task[]): number => {
+    return column.reduce((sum, task) => sum + (task.points || 0), 0);
+  };
+
   useEffect(() => {
     const points = Object.entries(board).reduce<Record<string, number>>((acc, [column, tasks]) => {
-      acc[column] = tasks.reduce((sum: any, task: { points: any; }) => sum + (task.points || 0), 0);
+      acc[column] = calculatePoints(tasks);
       return acc;
     }, {});
     setTotalPoints(points);

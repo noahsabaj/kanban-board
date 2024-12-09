@@ -1,7 +1,6 @@
 'use client';
 
 import { Task, Priority, TaskType } from '@/components/kanban/types';
-import { useState } from 'react';
 
 interface TaskModalProps {
   task: Task;

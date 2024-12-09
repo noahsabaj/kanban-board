@@ -20,12 +20,10 @@ export const KanbanColumn = ({
   columnId,
   tasks,
   totalPoints,
-  darkMode,
   onDrop,
   onDragOver,
   onDragStart,
   onTaskClick,
-  searchTerm,
 }: ColumnProps) => {
   return (
     <div 

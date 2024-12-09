@@ -1,6 +1,6 @@
 'use client';
 
-import { Filter, SortAsc, SortDesc, ArrowUpDown } from 'lucide-react';
+import { Filter, ArrowUpDown } from 'lucide-react';
 import { Priority } from '../kanban/types';
 
 export type SortType = 'priority-desc' | 'priority-asc' | 'alphabetical' | 'none';

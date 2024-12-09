@@ -1,4 +1,4 @@
-export type Priority = '🔥' | '⭐' | '👍' | '📝';
+export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type TaskType = '🎮' | '🐛' | '🔧' | '📱';
 
 export interface Task {

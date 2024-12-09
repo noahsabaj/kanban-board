@@ -39,14 +39,19 @@ export const BulkImportModal = ({
           onChange={e => onBulkTasksChange(e.target.value)}
           placeholder={`Paste your user stories JSON array here, e.g.:
             [
-            {
+              {
                 "title": "Story title",
                 "priority": "🔥",
                 "type": "🎮",
                 "category": "MVP Core",
                 "description": "Story description",
+                "acceptanceCriteria": [
+                  "User can successfully do X",
+                  "System validates Y",
+                  "Error handling for Z is implemented"
+                ],
                 "points": 5
-            }
+              }
             ]`}
           rows={10}
           className="w-full p-4 rounded-lg bg-[#0d1117] border border-gray-600 

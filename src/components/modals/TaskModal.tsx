@@ -36,7 +36,7 @@ export const TaskModal = ({
 }: TaskModalProps) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className={`${darkMode ? 'bg-[#161b22]' : 'bg-white'} p-6 rounded-xl max-w-lg w-full shadow-xl border border-gray-700`}>
+      <div className={`${darkMode ? 'bg-[#161b22]' : 'bg-white'} p-6 rounded-xl max-w-lg w-full shadow-xl border border-gray-700 max-h-[90vh] overflow-y-auto`}>
         {!isEditing && !showDeleteConfirm ? (
           <>
             <div className="flex justify-between items-start mb-4">
@@ -60,7 +60,20 @@ export const TaskModal = ({
               <span className="px-2 py-1 bg-[#21262d] rounded text-sm">{task.type}</span>
               <span className="px-2 py-1 bg-[#21262d] rounded text-sm">{task.category}</span>
             </div>
-            <p className="text-gray-300 whitespace-pre-wrap">{task.description || 'No description provided.'}</p>
+            <p className="text-gray-300 whitespace-pre-wrap mb-4">{task.description || 'No description provided.'}</p>
+            
+            <div className="mt-4">
+              <h3 className="text-sm text-gray-400 mb-2">Acceptance Criteria:</h3>
+              {task.acceptanceCriteria && task.acceptanceCriteria.length > 0 ? (
+                <ul className="list-disc list-inside space-y-1 text-gray-300">
+                  {task.acceptanceCriteria.map((criteria, index) => (
+                    <li key={index}>{criteria}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500 italic">No acceptance criteria specified</p>
+              )}
+            </div>
           </>
         ) : showDeleteConfirm ? (
           <div className="text-center">
@@ -143,6 +156,51 @@ export const TaskModal = ({
               rows={3}
               className="w-full p-2 rounded-lg bg-[#0d1117] border border-gray-600 text-white"
             />
+            
+            <div className="space-y-2">
+              <label className="text-sm text-gray-400">Acceptance Criteria</label>
+              {editingTask?.acceptanceCriteria?.map((criteria, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={criteria}
+                    onChange={(e) => {
+                      const newCriteria = [...(editingTask.acceptanceCriteria || [])];
+                      newCriteria[index] = e.target.value;
+                      onEditingTaskChange({ ...task, acceptanceCriteria: newCriteria });
+                    }}
+                    className="flex-1 p-2 rounded-lg bg-[#0d1117] border border-gray-600 text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newCriteria = editingTask.acceptanceCriteria?.filter((_, i) => i !== index);
+                      onEditingTaskChange({
+                        ...editingTask!,
+                        acceptanceCriteria: newCriteria || []
+                      });
+                    }}
+                    className="px-2 py-1 text-red-400 hover:text-red-300"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newCriteria = [...(editingTask?.acceptanceCriteria || []), ''];
+                  onEditingTaskChange({
+                    ...editingTask!,
+                    acceptanceCriteria: newCriteria
+                  });
+                }}
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
+                + Add Criteria
+              </button>
+            </div>
+
             <div className="flex gap-3">
               <button
                 type="submit"

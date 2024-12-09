@@ -12,7 +12,7 @@ interface FilterControlsProps {
   onSortChange: (sort: SortType) => void;
 }
 
-const priorities: Priority[] = ['🔥', '⭐', '👍', '📝'];
+const priorities: Priority[] = ['Critical', 'High', 'Medium', 'Low'];
 
 export const FilterControls = ({
   selectedPriority,
@@ -30,10 +30,10 @@ export const FilterControls = ({
             <button
               key={priority}
               onClick={() => onPrioritySelect(selectedPriority === priority ? null : priority)}
-              className={`p-2 rounded-md transition-all border
+              className={`px-3 py-1.5 rounded-md transition-all text-sm
                 ${selectedPriority === priority 
-                  ? 'bg-purple-500/20 border-purple-500/50 text-purple-500' 
-                  : 'bg-[var(--task-background)] border-[var(--task-border)] hover:bg-[var(--task-hover)]'
+                  ? 'bg-accent-purple/20 border border-accent-purple/50 text-accent-purple' 
+                  : 'bg-[var(--task-background)] border border-[var(--task-border)] hover:bg-[var(--task-hover)]'
                 }`}
             >
               {priority}
@@ -52,7 +52,7 @@ export const FilterControls = ({
           onChange={(e) => onSortChange(e.target.value as SortType)}
           className={`bg-[var(--task-background)] border border-[var(--task-border)] rounded-md p-2 
                     text-sm text-[var(--foreground)] hover:bg-[var(--task-hover)] transition-all 
-                    focus:outline-none focus:ring-1 focus:ring-purple-500/50 appearance-none pl-3 pr-8`}
+                    focus:outline-none focus:ring-1 focus:ring-accent-purple/50 appearance-none px-3 py-1.5`}
           style={{
             WebkitAppearance: "none",
             MozAppearance: "none"

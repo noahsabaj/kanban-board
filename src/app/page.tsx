@@ -15,7 +15,6 @@ import { MotivationBanner } from '@/components/ui/MotivationBanner';
 import { loadBoard, saveTask, deleteTask, updateTaskStatus } from '@/lib/storage';
 
 export default function Home() {
-  // State management with proper typing
   const [persistedState, setPersistedState] = useLocalStorage<PersistedState>(
     'kanbanState',
     DEFAULT_PERSISTED_STATE
@@ -35,18 +34,15 @@ export default function Home() {
   const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
   const [sortType, setSortType] = useState<SortType>('priority-desc');
 
-  // Initialize theme on mount
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
   }, []);
 
-  // Load tasks from database on mount
   useEffect(() => {
     const tasks = loadBoard();
     setBoard(tasks);
   }, []);
 
-  // Persist state changes
   useEffect(() => {
     setPersistedState({
       board,
@@ -55,7 +51,6 @@ export default function Home() {
     });
   }, [board, darkMode, setPersistedState]);
 
-  // Calculate total points
   useEffect(() => {
     const points = Object.entries(board).reduce<Record<string, number>>((acc, [column, tasks]) => {
       acc[column] = tasks.reduce((sum: any, task: { points: any; }) => sum + (task.points || 0), 0);
@@ -64,7 +59,6 @@ export default function Home() {
     setTotalPoints(points);
   }, [board]);
 
-  // Theme toggle handler
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -77,7 +71,7 @@ export default function Home() {
     if (selectedPriority) {
       filteredTasks = filteredTasks.filter(task => task.priority === selectedPriority);
     }
-
+  
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filteredTasks = filteredTasks.filter(task => 
@@ -88,12 +82,12 @@ export default function Home() {
     }
 
     const priorityOrder: Record<Priority, number> = {
-      '🔥': 4,
-      '⭐': 3,
-      '👍': 2,
-      '📝': 1
+      'Critical': 4,
+      'High': 3,
+      'Medium': 2,
+      'Low': 1
     };
-
+  
     switch (sortType) {
       case 'priority-desc':
         return filteredTasks.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
@@ -126,7 +120,7 @@ export default function Home() {
 
     let currentStatus: keyof BoardState = 'backlog';
     Object.entries(board).forEach(([status, tasks]) => {
-      if (tasks.some(t => t.id === updatedTask.id)) {
+      if (tasks.some((t: { id: number; }) => t.id === updatedTask.id)) {
         currentStatus = status as keyof BoardState;
       }
     });

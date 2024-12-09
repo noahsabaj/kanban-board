@@ -43,7 +43,7 @@ export const DefinitionOfDone = () => {
   ];
 
   return (
-    <div className="bg-stats-background border border-stats-border rounded-lg overflow-hidden transition-all duration-300 mb-6">
+    <div className="bg-stats-background border border-stats-border rounded-lg overflow-hidden transition-all duration-300 mb-6 pb-2">
         <div className="flex items-center gap-2 px-4 pt-4">
           <h3 className="font-medium">Definition of Done</h3>
         </div>

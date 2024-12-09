@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { Check } from 'lucide-react';
 
 export const DefinitionOfDone = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const criteria = [
     {
       category: "Code Quality",

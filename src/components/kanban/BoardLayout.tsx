@@ -8,9 +8,9 @@ interface BoardLayoutProps {
   totalPoints: { [key: string]: number };
   darkMode: boolean;
   searchTerm: string;
-  onDrop: (e: React.DragEvent, column: keyof BoardState) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragStart: (e: React.DragEvent, task: Task) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>, column: keyof BoardState) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>, task: Task) => void;
   onTaskClick: (task: Task) => void;
 }
 

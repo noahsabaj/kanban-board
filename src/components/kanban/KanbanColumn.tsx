@@ -1,4 +1,3 @@
-// src/components/kanban/KanbanColumn.tsx
 'use client';
 
 import { Task, BoardState } from '@/components/kanban/types';
@@ -9,9 +8,9 @@ interface ColumnProps {
   tasks: Task[];
   totalPoints: number;
   darkMode: boolean;
-  onDrop: (e: React.DragEvent, column: keyof BoardState) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragStart: (e: React.DragEvent, task: Task) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>, column: keyof BoardState) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>, task: Task) => void;
   onTaskClick: (task: Task) => void;
   searchTerm: string;
 }

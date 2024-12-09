@@ -14,7 +14,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onSubmit, darkMode }: CreateT
   const [newTask, setNewTask] = useState({
     title: '',
     priority: 'Medium' as Priority,
-    type: '🎮' as TaskType,
+    type: 'Feature' as TaskType,
     category: 'MVP Core',
     description: '',
     acceptanceCriteria: [''],
@@ -55,7 +55,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onSubmit, darkMode }: CreateT
     setNewTask({
       title: '',
       priority: 'Medium',
-      type: '🎮',
+      type: 'Feature',
       category: 'MVP Core',
       description: '',
       acceptanceCriteria: [''],
@@ -106,10 +106,17 @@ export const CreateTaskModal = ({ isOpen, onClose, onSubmit, darkMode }: CreateT
           className="w-full p-2 rounded-lg bg-[#0d1117] border border-gray-600 
                   text-white focus:ring-2 focus:ring-blue-500"
         >
-          <option value="🎮">🎮 Feature</option>
-          <option value="🐛">🐛 Bug</option>
-          <option value="🔧">🔧 Technical</option>
-          <option value="📱">📱 Platform</option>
+          <option value="Feature">Feature</option>
+          <option value="Bug">Bug</option>
+          <option value="Technical">Technical</option>
+          <option value="Platform">Platform</option>
+          <option value="Documentation">Documentation</option>
+          <option value="Security">Security</option>
+          <option value="Performance">Performance</option>
+          <option value="Research">Research</option>
+          <option value="Design">Design</option>
+          <option value="Testing">Testing</option>
+          <option value="Other">Other</option>
         </select>
         <input
           type="text"

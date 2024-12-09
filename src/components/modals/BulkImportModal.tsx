@@ -42,7 +42,7 @@ export const BulkImportModal = ({
               {
                 "title": "Story title",
                 "priority": "High",
-                "type": "🎮",
+                "type": "Feature",
                 "category": "MVP Core",
                 "description": "Story description",
                 "acceptanceCriteria": [

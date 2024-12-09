@@ -128,10 +128,17 @@ export const TaskModal = ({
               onChange={e => onEditingTaskChange({ ...task, type: e.target.value as TaskType })}
               className="w-full p-2 rounded-lg bg-[#0d1117] border border-gray-600 text-white"
             >
-              <option value="🎮">🎮 Feature</option>
-              <option value="🐛">🐛 Bug</option>
-              <option value="🔧">🔧 Technical</option>
-              <option value="📱">📱 Platform</option>
+              <option value="Feature">Feature</option>
+              <option value="Bug">Bug</option>
+              <option value="Technical">Technical</option>
+              <option value="Platform">Platform</option>
+              <option value="Documentation">Documentation</option>
+              <option value="Security">Security</option>
+              <option value="Performance">Performance</option>
+              <option value="Research">Research</option>
+              <option value="Design">Design</option>
+              <option value="Testing">Testing</option>
+              <option value="Other">Other</option>
             </select>
             <input
               type="text"

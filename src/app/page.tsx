@@ -12,6 +12,7 @@ import { BoardMetrics } from '@/components/kanban/BoardMetrics';
 import { BulkImportModal } from '@/components/modals/BulkImportModal';
 import { FilterControls, SortType } from '@/components/kanban/FilterControls';
 import { MotivationBanner } from '@/components/ui/MotivationBanner';
+import { DefinitionOfDone } from '@/components/kanban/DefinitionOfDone';
 import { loadBoard, saveTask, deleteTask, updateTaskStatus } from '@/lib/storage';
 
 export default function Home() {
@@ -286,8 +287,9 @@ export default function Home() {
       </div>
 
       <div className="mt-8">
-        <MotivationBanner />
-      </div>
+          <DefinitionOfDone />
+          <MotivationBanner />
+        </div>
     </main>
   );
 }

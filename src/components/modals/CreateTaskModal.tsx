@@ -10,7 +10,7 @@ interface CreateTaskModalProps {
   darkMode: boolean;
 }
 
-export const CreateTaskModal = ({ isOpen, onClose, onSubmit, darkMode }: CreateTaskModalProps) => {
+export const CreateTaskModal = ({ isOpen, onClose, onSubmit }: CreateTaskModalProps) => {
   const [newTask, setNewTask] = useState({
     title: '',
     priority: 'Medium' as Priority,

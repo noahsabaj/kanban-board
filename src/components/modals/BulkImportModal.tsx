@@ -1,7 +1,5 @@
 'use client';
 
-import { Task } from '@/components/kanban/types';
-
 interface BulkImportModalProps {
   isOpen: boolean;
   onClose: () => void;

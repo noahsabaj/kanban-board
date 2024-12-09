@@ -8,6 +8,7 @@ export interface Task {
     type: TaskType;
     category: string;
     description?: string;
+    acceptanceCriteria?: string[];
     points: number;
     created: string;
     lastModified: string;

@@ -14,6 +14,7 @@ import { FilterControls, SortType } from '@/components/kanban/FilterControls';
 import { MotivationBanner } from '@/components/ui/MotivationBanner';
 import { DefinitionOfDone } from '@/components/kanban/DefinitionOfDone';
 import { loadBoard, saveTask, deleteTask, updateTaskStatus } from '@/lib/storage';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export default function Home() {
   const [persistedState, setPersistedState] = useLocalStorage<PersistedState>(
@@ -291,9 +292,11 @@ export default function Home() {
       </div>
 
       <div className="mt-8">
-          <DefinitionOfDone />
-          <MotivationBanner />
-        </div>
+        <DefinitionOfDone />
+        <MotivationBanner />
+      </div>
+
+      <SpeedInsights />
     </main>
   );
 }
